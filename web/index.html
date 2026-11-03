@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Universal Task Manager & Hardware Monitor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo-area">
+      <div class="logo-icon">UTM</div>
+      <div class="logo-text">Universal Task Manager</div>
+    </div>
+
+    <div class="header-controls">
+      <!-- Device Selector Dropdown -->
+      <select id="device-select" class="device-dropdown">
+        <option value="host-local">🖥️ This PC (Host System)</option>
+      </select>
+
+      <!-- Action Buttons -->
+      <button class="btn btn-primary" onclick="openModal('modal-adb')">
+        <span>🔌 Connect Wireless ADB</span>
+      </button>
+
+      <button class="btn" onclick="connectWebUSBDirect()">
+        <span>⚡ WebUSB Direct</span>
+      </button>
+
+      <button class="btn" onclick="openModal('modal-agent')">
+        <span>📡 Add Remote Agent (STB/Linux/Mac)</span>
+      </button>
+
+      <!-- Live Indicator -->
+      <div class="status-badge">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="connection-status">Connecting...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- App Body -->
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="nav-item active" data-tab="performance">
+        <span>📈</span> Performance & RAM
+      </div>
+      <div class="nav-item" data-tab="processes">
+        <span>📋</span> Processes (Tasks)
+      </div>
+      <div class="nav-item" data-tab="system">
+        <span>💻</span> Hardware & OS Specs
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- TAB 1: PERFORMANCE -->
+      <div class="tab-pane active" id="tab-performance">
+        <!-- Top Metrics Grid -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="card-title">Processor (CPU)</div>
+            <div class="card-value" id="cpu-val">--%</div>
+            <div class="card-sub" id="cpu-sub">Loading CPU stats...</div>
+          </div>
+
+          <div class="metric-card mem">
+            <div class="card-title">Physical Memory (RAM)</div>
+            <div class="card-value" id="mem-val">-- GB</div>
+            <div class="card-sub" id="mem-sub">Loading RAM stats...</div>
+          </div>
+
+          <div class="metric-card swap">
+            <div class="card-title">Swap / ZRAM (RAM Plus)</div>
+            <div class="card-value" id="swap-val">-- GB</div>
+            <div class="card-sub" id="swap-sub">Loading virtual memory...</div>
+          </div>
+
+          <div class="metric-card net">
+            <div class="card-title">Network Activity</div>
+            <div class="card-value" id="net-val">-- KB/s</div>
+            <div class="card-sub" id="net-sub">Transfer Rate</div>
+          </div>
+        </div>
+
+        <!-- Real-Time History Graphs -->
+        <div class="graph-card">
+          <div class="graph-header">
+            <div class="graph-title">CPU Utilization History (Live 60 FPS)</div>
+          </div>
+          <div class="canvas-container">
+            <canvas id="cpu-canvas"></canvas>
+          </div>
+        </div>
+
+        <div class="graph-card">
+          <div class="graph-header">
+            <div class="graph-title">Memory Allocation History (Live 60 FPS)</div>
+          </div>
+          <div class="canvas-container">
+            <canvas id="mem-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: PROCESSES (TASK MANAGER) -->
+      <div class="tab-pane" id="tab-processes">
+        <div class="table-container">
+          <div class="table-header-controls">
+            <input type="text" id="process-search" class="search-input" placeholder="🔍 Filter task by name, PID, or package..." />
+            <div style="font-size:12px; color:var(--text-secondary);">
+              Showing active processes sorted by memory consumption
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th data-sort="pid" style="width: 80px;">PID</th>
+                <th data-sort="name">Process Name / Command</th>
+                <th data-sort="cpu" style="width: 100px;">CPU %</th>
+                <th data-sort="memMB" style="width: 120px;">RAM (MB)</th>
+                <th data-sort="memPercent" style="width: 100px;">Memory %</th>
+                <th data-sort="user" style="width: 100px;">User</th>
+                <th style="width: 100px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="process-table-body">
+              <tr>
+                <td colspan="7" style="text-align:center; color:var(--text-secondary); padding: 30px;">
+                  Collecting process list from target device...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 3: SYSTEM SPECS -->
+      <div class="tab-pane" id="tab-system">
+        <div class="graph-card">
+          <div class="graph-title">Hardware & Operating System Specifications</div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 10px;">
+            <div class="metric-card">
+              <div class="card-title">Device Model & Codename</div>
+              <div class="card-value" id="spec-device" style="font-size: 20px;">--</div>
+            </div>
+            <div class="metric-card">
+              <div class="card-title">Operating System / Platform</div>
+              <div class="card-value" id="spec-os" style="font-size: 20px;">--</div>
+            </div>
+            <div class="metric-card">
+              <div class="card-title">Architecture</div>
+              <div class="card-value" id="spec-arch" style="font-size: 20px;">--</div>
+            </div>
+            <div class="metric-card">
+              <div class="card-title">Processor / SoC Platform</div>
+              <div class="card-value" id="spec-cpu" style="font-size: 20px;">--</div>
+            </div>
+            <div class="metric-card">
+              <div class="card-title">Total Cores</div>
+              <div class="card-value" id="spec-cores" style="font-size: 20px;">--</div>
+            </div>
+            <div class="metric-card">
+              <div class="card-title">Kernel / Patch Level</div>
+              <div class="card-value" id="spec-sec" style="font-size: 20px;">--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL 1: CONNECT WIRELESS ADB -->
+  <div class="modal-overlay" id="modal-adb">
+    <div class="modal-card">
+      <div class="modal-title">Connect Wireless Android (ADB)</div>
+      <p style="font-size:12px; color:var(--text-secondary);">
+        Connect to Android Phones, Tablets, or Android TV Box / STB over local WiFi network without cable.
+      </p>
+      <input type="text" id="adb-ip" class="search-input" style="width:100%;" placeholder="e.g. 192.168.1.45:5555" />
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn" onclick="closeModal('modal-adb')">Cancel</button>
+        <button class="btn btn-primary" onclick="connectWirelessADB()">Connect Device</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ADD REMOTE AGENT -->
+  <div class="modal-overlay" id="modal-agent">
+    <div class="modal-card">
+      <div class="modal-title">Monitor Remote STB, Linux, macOS, or Windows</div>
+      <p style="font-size:12px; color:var(--text-secondary);">
+        Run this single command on your remote Linux STB (Armbian/HG680P/B860H), Raspberry Pi, or Laptop to stream live telemetry to this dashboard:
+      </p>
+      <div class="code-box">
+        curl -s http://&lt;THIS_SERVER_IP&gt;:3000/agents/universal_agent.sh | sh
+      </div>
+      <p style="font-size:11px; color:var(--text-secondary);">
+        Or with Python 3: <code>SERVER_URL=http://&lt;IP&gt;:3000 python3 universal_agent.py</code>
+      </p>
+      <div style="display:flex; justify-content:flex-end;">
+        <button class="btn btn-primary" onclick="closeModal('modal-agent')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

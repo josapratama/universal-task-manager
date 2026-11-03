@@ -1,0 +1,17 @@
+{
+  "name": "universal-task-manager-server",
+  "version": "1.0.0",
+  "description": "Universal Cross-Platform Task Manager & Hardware Monitor Server for Windows, Linux, macOS, STB, Android, and SBCs",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "systeminformation": "^5.25.11",
+    "ws": "^8.18.0"
+  },
+  "author": "Josa Pratama",
+  "license": "MIT"
+}

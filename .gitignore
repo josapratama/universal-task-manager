@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Android build outputs
+android-agent/.gradle/
+android-agent/build/
+android-agent/*/build/
+*.apk
+*.aab
+
+# Editor settings
+.idea/
+.vscode/
+*.swp
+*.swo
